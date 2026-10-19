@@ -28,7 +28,6 @@ test('existing RICE DOCTOR inline scripts still parse and link to the water bank
 });
 
 test('committee dashboard is role-gated and keeps farmer and committee views separate', () => {
-  assert.match(html, /id="adminDashboardLink"[^>]+water-bank\.html\?admin=1/);
   assert.match(html, /id="adminDenied"/);
   assert.match(js, /adminView = new URLSearchParams\(location\.search\)\.get\('admin'\) === '1'/);
   assert.match(js, /const committee = staff\.length > 0 && !!user\.email_confirmed_at/);
@@ -39,13 +38,16 @@ test('committee dashboard is role-gated and keeps farmer and committee views sep
   assert.match(js, /const edit = adminView && staff\.some/);
 });
 
-test('account and water bank headers expose the Admin entry point while the dashboard enforces committee access', () => {
-  assert.match(accountHtml, /id="adminDashboardLink" class="admin-link" href="\.\/water-bank\.html\?admin=1">Admin dashboard/);
-  assert.match(html, /id="adminDashboardLink" href="\.\/water-bank\.html\?admin=1">Admin dashboard/);
-  assert.ok(accountJs.includes('function updateAdminLink()'));
-  assert.ok(js.includes("$('adminDashboardLink').hidden = false;"));
+test('committee login starts from the account page and redirects authorized users to Admin', () => {
+  assert.match(accountHtml, /class="admin-entry" href="\.\/account\.html\?adminLogin=1">เข้าสู่ระบบสำหรับคณะกรรมการ/);
+  assert.doesNotMatch(html, /<a[^>]*>Admin dashboard<\/a>/);
+  assert.match(accountJs, /adminLoginIntent=new URLSearchParams\(location\.search\)\.get\('adminLogin'\)==='1'/);
+  assert.match(accountJs, /function openAdminDashboard\(authSession\)/);
+  assert.match(accountJs, /from\('water_community_staff'\)[\s\S]*?eq\('user_id',user\.id\)/);
+  assert.match(accountJs, /location\.assign\('\.\/water-bank\.html\?admin=1'\)/);
+  assert.match(accountJs, /ยังไม่ได้รับสิทธิ์คณะกรรมการ/);
   assert.match(js, /const committee = staff\.length > 0 && !!user\.email_confirmed_at/);
-  assert.ok(js.includes("$('adminDenied')"));
+  assert.ok(js.includes("$('adminDenied').hidden = !adminView || allowed;"));
 });
 
 test('migration enables row-level security for every water data table', () => {
