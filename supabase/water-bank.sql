@@ -204,7 +204,7 @@ begin
   insert into public.water_deliveries(allocation_id,delivered_volume_m3,note,recorded_by) values(a.id,p_volume_m3,nullif(btrim(p_note),''),(select auth.uid())) returning * into d;
   select coalesce(sum(delivered_volume_m3),0) into already from public.water_deliveries x join public.water_allocations y on y.id=x.allocation_id where y.request_id=r.id;
   update public.water_allocations set status=case when allocation_delivered+p_volume_m3 >= a.allocated_volume_m3 then 'completed' else 'in_progress' end where id=a.id;
-  update public.water_requests set status=case when already+p_volume_m3 >= approved_volume_m3 then 'completed' else 'partially_delivered' end where id=r.id;
+  update public.water_requests set status=case when already >= approved_volume_m3 then 'completed' else 'partially_delivered' end where id=r.id;
   return d;
 end $$;
 
