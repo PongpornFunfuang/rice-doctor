@@ -28,7 +28,6 @@
     $('deliverySection').hidden = !adminView || !allowed;
     $('farmerPanel').hidden = adminView;
     $('reviewSection').hidden = adminView && !allowed;
-    $('adminDashboardLink').hidden = false;
     if (adminView && allowed) {
       $('pageTitle').textContent = 'Admin dashboard · ธนาคารน้ำชุมชน';
       $('requestTableTitle').textContent = 'คำขอและตารางจัดสรร';
