@@ -10,6 +10,7 @@ const sql = fs.readFileSync(path.join(root, 'supabase', 'water-bank.sql'), 'utf8
 const mainHtml = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
 const accountHtml = fs.readFileSync(path.join(root, 'account.html'), 'utf8');
 const accountJs = fs.readFileSync(path.join(root, 'account.js'), 'utf8');
+const accountCss = fs.readFileSync(path.join(root, 'account.css'), 'utf8');
 const navigationCss = fs.readFileSync(path.join(root, 'navigation.css'), 'utf8');
 
 test('water bank script references existing unique HTML ids', () => {
@@ -47,6 +48,8 @@ test('committee login starts from the account page and redirects authorized user
   assert.match(accountJs, /from\('water_community_staff'\)[\s\S]*?eq\('user_id',user\.id\)/);
   assert.match(accountJs, /location\.assign\('\.\/water-bank\.html\?admin=1'\)/);
   assert.match(accountJs, /ยังไม่ได้รับสิทธิ์คณะกรรมการ/);
+  assert.match(accountCss, /\.primary-button\{[^}]*width:100%[^}]*border-radius:11px[^}]*padding:13px 18px[^}]*font-size:13px[^}]*background:var\(--green\)[^}]*color:#fff/);
+  assert.match(accountCss, /\.admin-entry\{[^}]*width:100%[^}]*padding:13px 18px[^}]*border-radius:11px[^}]*font-size:13px[^}]*background:var\(--green\)[^}]*color:#fff/);
   assert.match(js, /const committee = staff\.length > 0 && !!user\.email_confirmed_at/);
   assert.ok(js.includes("$('adminDenied').hidden = !adminView || allowed;"));
 });
