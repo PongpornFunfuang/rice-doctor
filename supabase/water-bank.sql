@@ -104,7 +104,7 @@ create index if not exists water_deliveries_allocation_idx on public.water_deliv
 
 create or replace function private.water_is_real_user()
 returns boolean language sql stable security definer set search_path = '' as $$
-  select exists (select 1 from auth.users u where u.id = (select auth.uid()) and coalesce((u.raw_app_meta_data->>'provider') <> 'anonymous', true) and u.is_anonymous is distinct from true)
+  select exists (select 1 from auth.users u where u.id = (select auth.uid()) and u.is_anonymous is false and u.email_confirmed_at is not null)
 $$;
 
 create or replace function private.water_is_manager(p_community_id uuid)
