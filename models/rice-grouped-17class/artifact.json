@@ -1,0 +1,46 @@
+{
+  "sha256": "fb09c01a5769385c882324dda26dcb02b4acf418a9efb85d01a88f2389c15947",
+  "classes": [
+    "bacterial_leaf_blight",
+    "brown_spot",
+    "grain_discoloration",
+    "leaf_blast",
+    "leaf_scald",
+    "narrow_brown_spot",
+    "pesticide_residue",
+    "healthy",
+    "bacterial_leaf_streak",
+    "bakanae",
+    "grassy_stunt_virus",
+    "ragged_stunt_virus",
+    "rice_false_smut",
+    "sheath_blight",
+    "sheath_rot",
+    "stem_rot",
+    "tungro_virus"
+  ],
+  "keys": [
+    "Rice__Bacterial_Leaf_Blight",
+    "Rice__Brown_Spot",
+    "Rice__Grain_Discoloration",
+    "Rice__Leaf_Blast",
+    "Rice__Leaf_Scald",
+    "Rice__Narrow_Brown_Leaf_Spot",
+    "Rice__Pesticide_Residue",
+    "Rice__Healthy_Leaf",
+    "Rice__Bacterial_Leaf_Streak",
+    "Rice__Bakanae",
+    "Rice__Grassy_Stunt",
+    "Rice__Ragged_Stunt",
+    "Rice__False_Smut",
+    "Rice__Sheath_Blight",
+    "Rice__Sheath_Rot",
+    "Rice__Stem_Rot",
+    "Rice__Tungro"
+  ],
+  "output_shape": [
+    1,
+    17
+  ],
+  "uncertain_gate": 0.4
+}
