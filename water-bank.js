@@ -22,7 +22,8 @@
     $('headerLoginLabel').textContent = real ? 'บัญชีของฉัน' : 'เข้าสู่ระบบ';
     $('sidebarAccountName').textContent = real ? (user.email || 'บัญชีของฉัน') : user ? 'บัญชีชั่วคราว' : 'ยินดีต้อนรับ';
     $('sidebarAccountHint').textContent = real ? 'จัดการบัญชีในแท็บใหม่ ↗' : 'เข้าสู่ระบบเพื่อเก็บประวัติ ↗';
-  }  function requireRealUser() {
+  }
+  function requireRealUser() {
     if (!session?.user || session.user.is_anonymous || !session.user.email_confirmed_at) throw new Error('เข้าสู่ระบบด้วยบัญชีอีเมลที่ยืนยันแล้วของ RICE DOCTOR ก่อนใช้งานธนาคารน้ำ');
   }
   function setAdminSections(allowed) {
