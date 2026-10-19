@@ -34,6 +34,7 @@ test('migration enables row-level security for every water data table', () => {
   assert.match(sql, /water_is_manager\(community_id\)/i);
   assert.match(sql, /create schema if not exists private/i);
   assert.match(sql, /function private\.water_is_manager/i);
+  assert.match(sql, /u\.is_anonymous is false and u\.email_confirmed_at is not null/i);
   assert.doesNotMatch(sql, /function public\.water_is_manager/i);
 });
 
