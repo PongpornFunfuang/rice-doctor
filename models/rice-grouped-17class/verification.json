@@ -1,0 +1,52 @@
+{
+  "onnx_vs_pytorch_max_logit_error": 3.24249267578125e-05,
+  "pairwise_split_overlap": {
+    "train_validation": {
+      "shared_hash_groups": 0,
+      "shared_sha256": 0
+    },
+    "train_test": {
+      "shared_hash_groups": 0,
+      "shared_sha256": 0
+    },
+    "validation_test": {
+      "shared_hash_groups": 0,
+      "shared_sha256": 0
+    }
+  },
+  "bootstrap": "1000 resamples of whole perceptual hash groups, percentile 95% interval; conditional on source labels and available sources",
+  "test_95ci": {
+    "macro_f1": [
+      0.8190988385182792,
+      0.9076635528420881
+    ],
+    "target_13_macro_f1": [
+      0.8331026073956014,
+      0.9135135438524988
+    ],
+    "top1_in_true_labels": [
+      0.7954473166782327,
+      0.870751958767652
+    ]
+  },
+  "test_positive_hash_groups": {
+    "bacterial_leaf_blight": 95,
+    "brown_spot": 81,
+    "grain_discoloration": 7,
+    "leaf_blast": 92,
+    "leaf_scald": 37,
+    "narrow_brown_spot": 49,
+    "pesticide_residue": 3,
+    "healthy": 36,
+    "bacterial_leaf_streak": 11,
+    "bakanae": 11,
+    "grassy_stunt_virus": 11,
+    "ragged_stunt_virus": 22,
+    "rice_false_smut": 12,
+    "sheath_blight": 6,
+    "sheath_rot": 7,
+    "stem_rot": 15,
+    "tungro_virus": 6
+  },
+  "model_sha256": "fb09c01a5769385c882324dda26dcb02b4acf418a9efb85d01a88f2389c15947"
+}
