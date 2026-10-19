@@ -3,5 +3,5 @@
 @media(max-width:900px){.account-layout{margin:12px 24px 24px}.account-story{padding:38px 30px}.account-story h1{font-size:37px}.account-form-area{padding:32px 28px}.account-header{padding:24px}.rice-art{height:220px}}
 @media(max-width:640px){.account-header{padding:20px}.brand{font-size:15px}.brand-icon{width:30px;height:30px;font-size:18px}.back-link{font-size:11px}.account-layout{display:block;margin:6px 16px 20px;border-radius:20px;min-height:0}.account-story{display:none}.account-form-area{padding:26px 24px 30px}.auth-tabs{margin-bottom:25px}h2{font-size:22px}.privacy-copy{font-size:10px}.account-header{gap:10px}.header-actions{gap:8px;flex-wrap:wrap;justify-content:flex-end}.admin-link{padding:7px 9px;font-size:10px}}
 
-.admin-entry{display:block;text-align:center;font-size:12px;font-weight:700;color:var(--green);background:#edf4e8;border:1px solid #e0ead8;border-radius:10px;padding:10px 12px;margin:0 0 12px}.admin-entry:hover{background:#e3eedb}
+.admin-entry{display:flex;align-items:center;justify-content:center;gap:12px;width:100%;margin:0 0 12px;padding:13px 18px;border:0;border-radius:11px;font-size:13px;font-weight:600;background:var(--green);color:#fff;transition:background .15s}.admin-entry:hover{background:#22593a}
 
