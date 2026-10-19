@@ -8,6 +8,8 @@ const html = fs.readFileSync(path.join(root, 'water-bank.html'), 'utf8');
 const js = fs.readFileSync(path.join(root, 'water-bank.js'), 'utf8');
 const sql = fs.readFileSync(path.join(root, 'supabase', 'water-bank.sql'), 'utf8');
 const mainHtml = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
+const accountHtml = fs.readFileSync(path.join(root, 'account.html'), 'utf8');
+const accountJs = fs.readFileSync(path.join(root, 'account.js'), 'utf8');
 
 test('water bank script references existing unique HTML ids', () => {
   const ids = [...html.matchAll(/\bid="([^"]+)"/g)].map((m) => m[1]);
@@ -35,6 +37,13 @@ test('committee dashboard is role-gated and keeps farmer and committee views sep
   assert.ok(js.includes("$('farmerPanel').hidden = adminView;"));
   assert.match(js, /const manager = adminView && staff\.some/);
   assert.match(js, /const edit = adminView && staff\.some/);
+});
+
+test('account header shows the Admin dashboard link only after committee membership lookup', () => {
+  assert.match(accountHtml, /id="adminDashboardLink" class="admin-link" href="\.\/water-bank\.html\?admin=1" hidden/);
+  assert.match(accountJs, /from\('water_community_staff'\)\.select\('community_id'\)\.eq\('user_id',user\.id\)/);
+  assert.match(accountJs, /link\.hidden=!!error\|\|!data\?\.length/);
+  assert.match(accountJs, /updateAdminLink\(user\)/);
 });
 
 test('migration enables row-level security for every water data table', () => {
