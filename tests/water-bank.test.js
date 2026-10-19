@@ -25,6 +25,18 @@ test('existing RICE DOCTOR inline scripts still parse and link to the water bank
   assert.match(mainHtml, /href="\.\/water-bank\.html"/);
 });
 
+test('committee dashboard is role-gated and keeps farmer and committee views separate', () => {
+  assert.match(html, /id="adminDashboardLink"[^>]+water-bank\.html\?admin=1/);
+  assert.match(html, /id="adminDenied"/);
+  assert.match(js, /adminView = new URLSearchParams\(location\.search\)\.get\('admin'\) === '1'/);
+  assert.match(js, /const committee = staff\.length > 0 && !!user\.email_confirmed_at/);
+  assert.match(js, /sourceCommunity'\)\.innerHTML = '<option value="">เลือกชุมชน<\/option>' \+ communities\.filter\(\(c\) => staff\.some\(\(s\) => s\.community_id === c\.id\)\)/);
+  assert.ok(js.includes("$('adminDenied').hidden = !adminView || allowed;"));
+  assert.ok(js.includes("$('farmerPanel').hidden = adminView;"));
+  assert.match(js, /const manager = adminView && staff\.some/);
+  assert.match(js, /const edit = adminView && staff\.some/);
+});
+
 test('migration enables row-level security for every water data table', () => {
   for (const table of ['water_communities', 'water_community_staff', 'water_sources', 'water_requests', 'water_allocations', 'water_deliveries']) {
     assert.match(sql, new RegExp(`alter table public\\.${table} enable row level security`, 'i'));
