@@ -50,6 +50,17 @@ test('committee login starts from the account page and redirects authorized user
   assert.ok(js.includes("$('adminDenied').hidden = !adminView || allowed;"));
 });
 
+test('water bank reuses the shared RICE DOCTOR navigation and page shell', () => {
+  const navigation = fs.readFileSync(path.join(root, 'navigation.js'), 'utf8');
+  assert.match(html, /href="\.\/navigation\.css\?v=water-bank-shell/);
+  assert.match(html, /src="\.\/navigation\.js\?v=water-bank-shell/);
+  assert.match(html, /id="menuToggle"/);
+  assert.match(html, /id="sidebarScrim"/);
+  assert.match(html, /class="app-main"/);
+  assert.match(html, /class="side-link" data-route="water-bank"[^>]*aria-current="page"/);
+  assert.match(navigation, /location\.pathname\.endsWith\('\/water-bank\.html'\).*water-bank/);
+});
+
 test('migration enables row-level security for every water data table', () => {
   for (const table of ['water_communities', 'water_community_staff', 'water_sources', 'water_requests', 'water_allocations', 'water_deliveries']) {
     assert.match(sql, new RegExp(`alter table public\\.${table} enable row level security`, 'i'));
