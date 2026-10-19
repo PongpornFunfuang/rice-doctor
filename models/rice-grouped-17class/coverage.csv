@@ -1,0 +1,15 @@
+Thai guide disease,model_class,supported,train_positive,validation_positive,test_positive,test_f1
+โรคกาบใบเน่า,sheath_rot,True,64,16,11,0.7407407164573669
+โรคกาบใบแห้ง,sheath_blight,True,74,16,8,0.8888888955116272
+โรคขอบใบแห้ง,bacterial_leaf_blight,True,861,179,196,0.7929292917251587
+โรคเขียวเตี้ย,grassy_stunt_virus,True,73,16,11,1.0
+โรคดอกกระถิน (False smut),rice_false_smut,True,67,17,15,1.0
+โรคถอดฝักดาบ (Bakanae),bakanae,True,75,14,11,1.0
+โรคใบขีดโปร่งแสง,bacterial_leaf_streak,True,68,18,13,0.7692307829856873
+โรคใบขีดสีน้ำตาล,narrow_brown_spot,True,420,102,118,0.841269850730896
+โรคใบจุดสีน้ำตาล,brown_spot,True,584,132,132,0.7924528121948242
+โรคใบสีส้ม (Tungro),tungro_virus,True,74,18,8,1.0
+โรคใบหงิก (โรคจู๋),ragged_stunt_virus,True,64,14,22,0.9523809552192688
+โรคเมล็ดด่าง,grain_discoloration,True,266,58,39,0.9333333373069763
+โรคหูด (Gall dwarf),rice_gall_dwarf,False,0,0,0,not evaluated
+โรคไหม้,leaf_blast,True,931,212,210,0.743842363357544
