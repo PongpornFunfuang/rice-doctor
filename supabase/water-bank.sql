@@ -2,6 +2,11 @@
 -- Run after schema.sql in Supabase SQL Editor. No real communities or water sources are seeded.
 -- Never place a service_role/secret key in browser code.
 
+-- Authorization helpers are not part of the Data API exposed public schema.
+create schema if not exists private;
+revoke all on schema private from public,anon;
+grant usage on schema private to authenticated;
+
 create table if not exists public.water_communities (
   id uuid primary key default gen_random_uuid(),
   name text not null check (length(btrim(name)) between 2 and 140),
@@ -97,12 +102,12 @@ create index if not exists water_requests_community_status_idx on public.water_r
 create index if not exists water_allocations_request_idx on public.water_allocations(request_id,scheduled_start);
 create index if not exists water_deliveries_allocation_idx on public.water_deliveries(allocation_id,delivered_at desc);
 
-create or replace function public.water_is_real_user()
+create or replace function private.water_is_real_user()
 returns boolean language sql stable security definer set search_path = '' as $$
   select exists (select 1 from auth.users u where u.id = (select auth.uid()) and coalesce((u.raw_app_meta_data->>'provider') <> 'anonymous', true) and u.is_anonymous is distinct from true)
 $$;
 
-create or replace function public.water_is_manager(p_community_id uuid)
+create or replace function private.water_is_manager(p_community_id uuid)
 returns boolean language sql stable security definer set search_path = '' as $$
   select exists (select 1 from public.water_community_staff s where s.community_id=p_community_id and s.user_id=(select auth.uid()) and s.role in ('committee','admin'))
 $$;
@@ -118,40 +123,40 @@ revoke all on public.water_communities,public.water_community_staff,public.water
 grant select on public.water_communities,public.water_community_staff,public.water_sources,public.water_requests,public.water_allocations,public.water_deliveries to authenticated;
 grant insert,update on public.water_sources to authenticated;
 grant insert on public.water_requests to authenticated;
-revoke all on function public.water_is_real_user() from public,anon;
-revoke all on function public.water_is_manager(uuid) from public,anon;
-grant execute on function public.water_is_real_user() to authenticated;
-grant execute on function public.water_is_manager(uuid) to authenticated;
+revoke all on function private.water_is_real_user() from public,anon;
+revoke all on function private.water_is_manager(uuid) from public,anon;
+grant execute on function private.water_is_real_user() to authenticated;
+grant execute on function private.water_is_manager(uuid) to authenticated;
 
 drop policy if exists "Authenticated users see active water communities" on public.water_communities;
-create policy "Authenticated users see active water communities" on public.water_communities for select to authenticated using (status='active' and public.water_is_real_user());
+create policy "Authenticated users see active water communities" on public.water_communities for select to authenticated using (status='active' and private.water_is_real_user());
 drop policy if exists "Staff can see own staff grant" on public.water_community_staff;
-create policy "Staff can see own staff grant" on public.water_community_staff for select to authenticated using (public.water_is_real_user() and user_id=(select auth.uid()));
+create policy "Staff can see own staff grant" on public.water_community_staff for select to authenticated using (private.water_is_real_user() and user_id=(select auth.uid()));
 
 drop policy if exists "Authenticated users see water sources" on public.water_sources;
-create policy "Authenticated users see water sources" on public.water_sources for select to authenticated using (public.water_is_real_user() and exists (select 1 from public.water_communities c where c.id=community_id and c.status='active'));
+create policy "Authenticated users see water sources" on public.water_sources for select to authenticated using (private.water_is_real_user() and exists (select 1 from public.water_communities c where c.id=community_id and c.status='active'));
 drop policy if exists "Managers register water sources" on public.water_sources;
-create policy "Managers register water sources" on public.water_sources for insert to authenticated with check (public.water_is_real_user() and created_by=(select auth.uid()) and public.water_is_manager(community_id));
+create policy "Managers register water sources" on public.water_sources for insert to authenticated with check (private.water_is_real_user() and created_by=(select auth.uid()) and private.water_is_manager(community_id));
 drop policy if exists "Managers update water sources" on public.water_sources;
-create policy "Managers update water sources" on public.water_sources for update to authenticated using (public.water_is_real_user() and public.water_is_manager(community_id)) with check (public.water_is_real_user() and public.water_is_manager(community_id));
+create policy "Managers update water sources" on public.water_sources for update to authenticated using (private.water_is_real_user() and private.water_is_manager(community_id)) with check (private.water_is_real_user() and private.water_is_manager(community_id));
 
 drop policy if exists "Farmers and managers read scoped requests" on public.water_requests;
-create policy "Farmers and managers read scoped requests" on public.water_requests for select to authenticated using (public.water_is_real_user() and (user_id=(select auth.uid()) or public.water_is_manager(community_id)));
+create policy "Farmers and managers read scoped requests" on public.water_requests for select to authenticated using (private.water_is_real_user() and (user_id=(select auth.uid()) or private.water_is_manager(community_id)));
 drop policy if exists "Farmers submit own pending requests" on public.water_requests;
-create policy "Farmers submit own pending requests" on public.water_requests for insert to authenticated with check (public.water_is_real_user() and user_id=(select auth.uid()) and status='pending' and approved_volume_m3 is null and reviewed_by is null and exists(select 1 from public.water_communities c where c.id=community_id and c.status='active'));
+create policy "Farmers submit own pending requests" on public.water_requests for insert to authenticated with check (private.water_is_real_user() and user_id=(select auth.uid()) and status='pending' and approved_volume_m3 is null and reviewed_by is null and exists(select 1 from public.water_communities c where c.id=community_id and c.status='active'));
 
 drop policy if exists "Farmers and managers read scoped allocations" on public.water_allocations;
-create policy "Farmers and managers read scoped allocations" on public.water_allocations for select to authenticated using (public.water_is_real_user() and exists(select 1 from public.water_requests r where r.id=request_id and (r.user_id=(select auth.uid()) or public.water_is_manager(r.community_id))));
+create policy "Farmers and managers read scoped allocations" on public.water_allocations for select to authenticated using (private.water_is_real_user() and exists(select 1 from public.water_requests r where r.id=request_id and (r.user_id=(select auth.uid()) or private.water_is_manager(r.community_id))));
 drop policy if exists "Farmers and managers read scoped deliveries" on public.water_deliveries;
-create policy "Farmers and managers read scoped deliveries" on public.water_deliveries for select to authenticated using (public.water_is_real_user() and exists(select 1 from public.water_allocations a join public.water_requests r on r.id=a.request_id where a.id=allocation_id and (r.user_id=(select auth.uid()) or public.water_is_manager(r.community_id))));
+create policy "Farmers and managers read scoped deliveries" on public.water_deliveries for select to authenticated using (private.water_is_real_user() and exists(select 1 from public.water_allocations a join public.water_requests r on r.id=a.request_id where a.id=allocation_id and (r.user_id=(select auth.uid()) or private.water_is_manager(r.community_id))));
 
 create or replace function public.water_review_request(p_request_id uuid,p_decision text,p_approved_volume_m3 numeric default null,p_note text default null)
 returns public.water_requests language plpgsql security definer set search_path = '' as $$
 declare r public.water_requests;
 begin
-  if not public.water_is_real_user() then raise exception 'A verified non-anonymous account is required'; end if;
+  if not private.water_is_real_user() then raise exception 'A verified non-anonymous account is required'; end if;
   select * into r from public.water_requests where id=p_request_id for update;
-  if not found or not public.water_is_manager(r.community_id) then raise exception 'Request not found or committee access required'; end if;
+  if not found or not private.water_is_manager(r.community_id) then raise exception 'Request not found or committee access required'; end if;
   if r.status <> 'pending' then raise exception 'Only pending requests can be reviewed'; end if;
   if p_decision is null or p_decision not in ('approve','reject') then raise exception 'Invalid decision'; end if;
   if p_decision='approve' then
@@ -167,9 +172,9 @@ create or replace function public.water_schedule_allocation(p_request_id uuid,p_
 returns public.water_allocations language plpgsql security definer set search_path = '' as $$
 declare r public.water_requests; s public.water_sources; total numeric; a public.water_allocations;
 begin
-  if not public.water_is_real_user() then raise exception 'A verified non-anonymous account is required'; end if;
+  if not private.water_is_real_user() then raise exception 'A verified non-anonymous account is required'; end if;
   select * into r from public.water_requests where id=p_request_id for update;
-  if not found or not public.water_is_manager(r.community_id) then raise exception 'Request not found or committee access required'; end if;
+  if not found or not private.water_is_manager(r.community_id) then raise exception 'Request not found or committee access required'; end if;
   if r.status not in ('approved','scheduled','partially_delivered') then raise exception 'Request is not ready for allocation'; end if;
   if p_volume_m3 is null or p_volume_m3 <= 0 or p_start is null or p_end is null or p_end <= p_start then raise exception 'Invalid allocation details'; end if;
   select * into s from public.water_sources where id=p_source_id and community_id=r.community_id for update;
@@ -188,18 +193,18 @@ create or replace function public.water_record_delivery(p_allocation_id uuid,p_v
 returns public.water_deliveries language plpgsql security definer set search_path = '' as $$
 declare a public.water_allocations; r public.water_requests; already numeric; allocation_delivered numeric; d public.water_deliveries;
 begin
-  if not public.water_is_real_user() then raise exception 'A verified non-anonymous account is required'; end if;
+  if not private.water_is_real_user() then raise exception 'A verified non-anonymous account is required'; end if;
   select * into a from public.water_allocations where id=p_allocation_id for update;
   if not found then raise exception 'Allocation not found'; end if;
   select * into r from public.water_requests where id=a.request_id for update;
-  if not public.water_is_manager(r.community_id) then raise exception 'Committee access required'; end if;
+  if not private.water_is_manager(r.community_id) then raise exception 'Committee access required'; end if;
   if p_volume_m3 is null or p_volume_m3 <= 0 then raise exception 'Delivered volume must be positive'; end if;
   select coalesce(sum(delivered_volume_m3),0) into allocation_delivered from public.water_deliveries where allocation_id=a.id;
   if allocation_delivered+p_volume_m3 > a.allocated_volume_m3 then raise exception 'Delivered volume exceeds this allocation'; end if;
   insert into public.water_deliveries(allocation_id,delivered_volume_m3,note,recorded_by) values(a.id,p_volume_m3,nullif(btrim(p_note),''),(select auth.uid())) returning * into d;
   select coalesce(sum(delivered_volume_m3),0) into already from public.water_deliveries x join public.water_allocations y on y.id=x.allocation_id where y.request_id=r.id;
   update public.water_allocations set status=case when allocation_delivered+p_volume_m3 >= a.allocated_volume_m3 then 'completed' else 'in_progress' end where id=a.id;
-  update public.water_requests set status=case when already >= approved_volume_m3 then 'completed' else 'partially_delivered' end where id=r.id;
+  update public.water_requests set status=case when already+p_volume_m3 >= approved_volume_m3 then 'completed' else 'partially_delivered' end where id=r.id;
   return d;
 end $$;
 
@@ -214,3 +219,4 @@ grant execute on function public.water_record_delivery(uuid,numeric,text) to aut
 -- insert into public.water_communities(name,region) values ('ชื่อชุมชนที่ยืนยันแล้ว','ตำบล/อำเภอ');
 -- insert into public.water_community_staff(community_id,user_id,role) values ('<community-uuid>','<auth-user-uuid>','admin');
 -- Never use example/fictitious water-source records as operational data.
+
