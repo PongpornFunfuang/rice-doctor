@@ -37,8 +37,7 @@
     if (adminView && allowed) {
       $('pageTitle').textContent = 'Admin dashboard · ธนาคารน้ำชุมชน';
       $('requestTableTitle').textContent = 'คำขอและตารางจัดสรร';
-      $('roleHint').textContent = `คณะกรรมการ/ผู้ดูแล · ${staff.length} ชุมชน`;
-    }
+      }
   }
   async function loadAll() {
     const db = ensureClient();
@@ -47,8 +46,6 @@
     session = auth.data.session;
     const user = session?.user;
     updateSharedAccount(user);
-    $('identity').textContent = user && !user.is_anonymous ? (user.email || 'บัญชีเกษตรกร') : user ? 'บัญชีชั่วคราว · ต้องเข้าสู่ระบบด้วยอีเมล' : 'ยังไม่ได้เข้าสู่ระบบ';
-    $('roleHint').textContent = 'ใช้บัญชี RICE DOCTOR เดิม · ผู้ขอเห็นเฉพาะคำขอของตน';
     if (!user || user.is_anonymous) {
       setAdminSections(false);
       $('communitySelect').innerHTML = '<option value="">เข้าสู่ระบบก่อนเลือกชุมชน</option>';
@@ -71,7 +68,6 @@
     communities = communityRes.data || []; staff = staffRes.data || []; sources = sourceRes.data || []; requests = requestRes.data || []; allocations = allocationRes.data || []; deliveries = deliveryRes.data || [];
     const committee = staff.length > 0 && !!user.email_confirmed_at;
     setAdminSections(committee);
-    if (!adminView) $('roleHint').textContent = committee ? `บัญชีคณะกรรมการ/ผู้ดูแล · ${staff.length} ชุมชน` : 'บัญชีเกษตรกร · เห็นเฉพาะคำขอของตน';
     const options = '<option value="">เลือกชุมชน</option>' + communities.map((c) => `<option value="${c.id}">${esc(c.name)}${c.region ? ` · ${esc(c.region)}` : ''}</option>`).join('');
     $('communitySelect').innerHTML = options;
     $('sourceCommunity').innerHTML = '<option value="">เลือกชุมชน</option>' + communities.filter((c) => staff.some((s) => s.community_id === c.id)).map((c) => `<option value="${c.id}">${esc(c.name)}${c.region ? ` · ${esc(c.region)}` : ''}</option>`).join('');
@@ -123,7 +119,6 @@
   function openDelivery(id) { $('deliveryAllocationId').value = id; $('deliveredVolumeInput').value = ''; $('deliveryNote').value = ''; $('deliveryDialog').showModal(); }
   $('saveDeliveryBtn').addEventListener('click', async () => { const button = $('saveDeliveryBtn'); setBusy(button, true); try { const { error } = await ensureClient().rpc('water_record_delivery', { p_allocation_id: $('deliveryAllocationId').value, p_volume_m3: Number($('deliveredVolumeInput').value), p_note: $('deliveryNote').value.trim() || null }); if (error) throw error; $('deliveryDialog').close(); say('บันทึกปริมาณส่งน้ำจริงแล้ว'); await loadAll(); } catch (e) { say(e.message, true); } finally { setBusy(button, false); } });
   $('closeDialog').addEventListener('click', () => $('decisionDialog').close()); $('closeDelivery').addEventListener('click', () => $('deliveryDialog').close());
-  $('refreshBtn').addEventListener('click', () => loadAll().then(() => say('อัปเดตข้อมูลแล้ว')).catch((e) => say(e.message, true)));
   const db = ensureClient();
   db.auth.onAuthStateChange((_event, nextSession) => { session = nextSession; window.setTimeout(() => loadAll().catch((e) => say(e.message, true)), 0); });
   loadAll().catch((e) => say(`${e.message} · ตรวจว่ารันไฟล์ supabase/water-bank.sql แล้ว`, true));
