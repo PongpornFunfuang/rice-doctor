@@ -32,6 +32,9 @@ test('migration enables row-level security for every water data table', () => {
   assert.match(sql, /from public,anon/i);
   assert.match(sql, /from public\.water_requests[\s\S]*?user_id=\(select auth\.uid\(\)\)/i);
   assert.match(sql, /water_is_manager\(community_id\)/i);
+  assert.match(sql, /create schema if not exists private/i);
+  assert.match(sql, /function private\.water_is_manager/i);
+  assert.doesNotMatch(sql, /function public\.water_is_manager/i);
 });
 
 test('water source types and allocation rules keep recharge wells out of supply allocation', () => {
@@ -49,6 +52,8 @@ test('review, allocation and actual delivery use guarded server-side functions',
     assert.match(sql, new RegExp(`grant execute on function public\\.${rpc}\\(`, 'i'));
   }
   assert.match(sql, /allocation_delivered\+p_volume_m3 > a\.allocated_volume_m3/i);
+  assert.match(sql, /already\+p_volume_m3 >= approved_volume_m3 then 'completed'/i);
   assert.match(html, /ไม่มีข้อมูลบ่อหรือน้ำตั้งต้น/);
   assert.doesNotMatch(sql, /insert into public\.water_sources/i, 'migration must not seed invented water sources');
 });
+
