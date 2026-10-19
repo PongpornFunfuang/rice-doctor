@@ -39,11 +39,13 @@ test('committee dashboard is role-gated and keeps farmer and committee views sep
   assert.match(js, /const edit = adminView && staff\.some/);
 });
 
-test('account header shows the Admin dashboard link only after committee membership lookup', () => {
-  assert.match(accountHtml, /id="adminDashboardLink" class="admin-link" href="\.\/water-bank\.html\?admin=1" hidden/);
-  assert.match(accountJs, /from\('water_community_staff'\)\.select\('community_id'\)\.eq\('user_id',user\.id\)/);
-  assert.match(accountJs, /link\.hidden=!!error\|\|!data\?\.length/);
-  assert.match(accountJs, /updateAdminLink\(user\)/);
+test('account and water bank headers expose the Admin entry point while the dashboard enforces committee access', () => {
+  assert.match(accountHtml, /id="adminDashboardLink" class="admin-link" href="\.\/water-bank\.html\?admin=1">Admin dashboard/);
+  assert.match(html, /id="adminDashboardLink" href="\.\/water-bank\.html\?admin=1">Admin dashboard/);
+  assert.ok(accountJs.includes('function updateAdminLink()'));
+  assert.ok(js.includes("$('adminDashboardLink').hidden = false;"));
+  assert.match(js, /const committee = staff\.length > 0 && !!user\.email_confirmed_at/);
+  assert.ok(js.includes("$('adminDenied')"));
 });
 
 test('migration enables row-level security for every water data table', () => {
