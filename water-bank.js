@@ -17,7 +17,12 @@
     client = window.supabase.createClient(config.url, config.key);
     return client;
   }
-  function requireRealUser() {
+  function updateSharedAccount(user) {
+    const real = !!user && !user.is_anonymous;
+    $('headerLoginLabel').textContent = real ? 'บัญชีของฉัน' : 'เข้าสู่ระบบ';
+    $('sidebarAccountName').textContent = real ? (user.email || 'บัญชีของฉัน') : user ? 'บัญชีชั่วคราว' : 'ยินดีต้อนรับ';
+    $('sidebarAccountHint').textContent = real ? 'จัดการบัญชีในแท็บใหม่ ↗' : 'เข้าสู่ระบบเพื่อเก็บประวัติ ↗';
+  }  function requireRealUser() {
     if (!session?.user || session.user.is_anonymous || !session.user.email_confirmed_at) throw new Error('เข้าสู่ระบบด้วยบัญชีอีเมลที่ยืนยันแล้วของ RICE DOCTOR ก่อนใช้งานธนาคารน้ำ');
   }
   function setAdminSections(allowed) {
@@ -40,6 +45,7 @@
     if (auth.error) throw auth.error;
     session = auth.data.session;
     const user = session?.user;
+    updateSharedAccount(user);
     $('identity').textContent = user && !user.is_anonymous ? (user.email || 'บัญชีเกษตรกร') : user ? 'บัญชีชั่วคราว · ต้องเข้าสู่ระบบด้วยอีเมล' : 'ยังไม่ได้เข้าสู่ระบบ';
     $('roleHint').textContent = 'ใช้บัญชี RICE DOCTOR เดิม · ผู้ขอเห็นเฉพาะคำขอของตน';
     if (!user || user.is_anonymous) {
