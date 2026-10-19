@@ -52,7 +52,7 @@ test('review, allocation and actual delivery use guarded server-side functions',
     assert.match(sql, new RegExp(`grant execute on function public\\.${rpc}\\(`, 'i'));
   }
   assert.match(sql, /allocation_delivered\+p_volume_m3 > a\.allocated_volume_m3/i);
-  assert.match(sql, /already\+p_volume_m3 >= approved_volume_m3 then 'completed'/i);
+  assert.match(sql, /select coalesce\(sum\(delivered_volume_m3\),0\) into already from public\.water_deliveries[\s\S]*?update public\.water_requests set status=case when already >= approved_volume_m3 then 'completed'/i);
   assert.match(html, /ไม่มีข้อมูลบ่อหรือน้ำตั้งต้น/);
   assert.doesNotMatch(sql, /insert into public\.water_sources/i, 'migration must not seed invented water sources');
 });
