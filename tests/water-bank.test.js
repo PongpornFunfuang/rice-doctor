@@ -10,6 +10,7 @@ const sql = fs.readFileSync(path.join(root, 'supabase', 'water-bank.sql'), 'utf8
 const mainHtml = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
 const accountHtml = fs.readFileSync(path.join(root, 'account.html'), 'utf8');
 const accountJs = fs.readFileSync(path.join(root, 'account.js'), 'utf8');
+const navigationCss = fs.readFileSync(path.join(root, 'navigation.css'), 'utf8');
 
 test('water bank script references existing unique HTML ids', () => {
   const ids = [...html.matchAll(/\bid="([^"]+)"/g)].map((m) => m[1]);
@@ -52,13 +53,16 @@ test('committee login starts from the account page and redirects authorized user
 
 test('water bank reuses the shared RICE DOCTOR navigation and page shell', () => {
   const navigation = fs.readFileSync(path.join(root, 'navigation.js'), 'utf8');
-  assert.match(html, /href="\.\/navigation\.css\?v=water-bank-shell/);
+  assert.match(html, /href="\.\/navigation\.css\?v=brand-scale/);
   assert.match(html, /src="\.\/navigation\.js\?v=water-bank-shell/);
   assert.match(html, /id="menuToggle"/);
   assert.match(html, /id="sidebarScrim"/);
   assert.match(html, /class="app-main"/);
   assert.match(html, /class="side-link" data-route="water-bank"[^>]*aria-current="page"/);
   assert.match(navigation, /location\.pathname\.endsWith\('\/water-bank\.html'\).*water-bank/);
+  assert.match(navigationCss, /\.brand\{[^}]*gap:11px[^}]*font-size:18px/);
+  assert.match(navigationCss, /\.brand-mark\{[^}]*width:36px;height:36px[^}]*border-radius:12px/);
+  assert.match(navigationCss, /\.brand-mark svg\{width:22px;height:22px/);
 });
 
 test('migration enables row-level security for every water data table', () => {
