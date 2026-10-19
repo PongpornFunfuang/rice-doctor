@@ -126,7 +126,7 @@ grant execute on function public.water_is_manager(uuid) to authenticated;
 drop policy if exists "Authenticated users see active water communities" on public.water_communities;
 create policy "Authenticated users see active water communities" on public.water_communities for select to authenticated using (status='active' and public.water_is_real_user());
 drop policy if exists "Staff can see own staff grant" on public.water_community_staff;
-create policy "Staff can see own staff grant" on public.water_community_staff for select to authenticated using (user_id=(select auth.uid()));
+create policy "Staff can see own staff grant" on public.water_community_staff for select to authenticated using (public.water_is_real_user() and user_id=(select auth.uid()));
 
 drop policy if exists "Authenticated users see water sources" on public.water_sources;
 create policy "Authenticated users see water sources" on public.water_sources for select to authenticated using (public.water_is_real_user() and exists (select 1 from public.water_communities c where c.id=community_id and c.status='active'));
