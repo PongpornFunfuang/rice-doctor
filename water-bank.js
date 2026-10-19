@@ -1,6 +1,8 @@
 (() => {
   'use strict';
   const $ = (id) => document.getElementById(id);
+  const adminView = new URLSearchParams(location.search).get('admin') === '1';
+  document.body.classList.toggle('admin-view', adminView);
   const labels = { pending: 'รอตรวจสอบ', approved: 'อนุมัติแล้ว', rejected: 'ไม่อนุมัติ', scheduled: 'มีตารางจัดสรร', partially_delivered: 'ส่งน้ำบางส่วน', completed: 'ส่งน้ำครบตามอนุมัติ', active: 'ใช้งาน', maintenance: 'บำรุงรักษา', inactive: 'หยุดใช้งาน' };
   const sourceLabels = { recharge_well: 'บ่อเติมน้ำใต้ดิน · เติมน้ำ', irrigation_well: 'บ่อสูบใช้งาน · สูบน้ำจัดสรร' };
   const fmt = (value) => Number(value || 0).toLocaleString('th-TH', { maximumFractionDigits: 1 });
@@ -16,7 +18,22 @@
     return client;
   }
   function requireRealUser() {
-    if (!session?.user || session.user.is_anonymous) throw new Error('เข้าสู่ระบบด้วยบัญชีอีเมล RICE DOCTOR ก่อนใช้งานธนาคารน้ำ');
+    if (!session?.user || session.user.is_anonymous || !session.user.email_confirmed_at) throw new Error('เข้าสู่ระบบด้วยบัญชีอีเมลที่ยืนยันแล้วของ RICE DOCTOR ก่อนใช้งานธนาคารน้ำ');
+  }
+  function setAdminSections(allowed) {
+    $('adminDenied').hidden = !adminView || allowed;
+    $('adminStats').hidden = !adminView || !allowed;
+    $('managerPanel').hidden = !adminView || !allowed;
+    $('sourceRegister').hidden = !adminView || !allowed;
+    $('deliverySection').hidden = !adminView || !allowed;
+    $('farmerPanel').hidden = adminView;
+    $('reviewSection').hidden = adminView && !allowed;
+    $('adminDashboardLink').hidden = !allowed;
+    if (adminView && allowed) {
+      $('pageTitle').textContent = 'Admin dashboard · ธนาคารน้ำชุมชน';
+      $('requestTableTitle').textContent = 'คำขอและตารางจัดสรร';
+      $('roleHint').textContent = `คณะกรรมการ/ผู้ดูแล · ${staff.length} ชุมชน`;
+    }
   }
   async function loadAll() {
     const db = ensureClient();
@@ -27,6 +44,7 @@
     $('identity').textContent = user && !user.is_anonymous ? (user.email || 'บัญชีเกษตรกร') : user ? 'บัญชีชั่วคราว · ต้องเข้าสู่ระบบด้วยอีเมล' : 'ยังไม่ได้เข้าสู่ระบบ';
     $('roleHint').textContent = 'ใช้บัญชี RICE DOCTOR เดิม · ผู้ขอเห็นเฉพาะคำขอของตน';
     if (!user || user.is_anonymous) {
+      setAdminSections(false);
       $('communitySelect').innerHTML = '<option value="">เข้าสู่ระบบก่อนเลือกชุมชน</option>';
       $('sourceList').textContent = 'เข้าสู่ระบบด้วยบัญชีอีเมลเพื่อดูแหล่งน้ำที่ชุมชนบันทึก';
       $('requestRows').innerHTML = '<tr><td colspan="6" class="empty">เข้าสู่ระบบเพื่อส่งคำขอและดูข้อมูลที่มีสิทธิ์เข้าถึง</td></tr>';
@@ -45,15 +63,16 @@
     ]);
     for (const result of [communityRes, staffRes, sourceRes, requestRes, allocationRes, deliveryRes]) if (result.error) throw result.error;
     communities = communityRes.data || []; staff = staffRes.data || []; sources = sourceRes.data || []; requests = requestRes.data || []; allocations = allocationRes.data || []; deliveries = deliveryRes.data || [];
-    $('managerPanel').hidden = staff.length === 0;
-    $('roleHint').textContent = staff.length ? `บัญชีคณะกรรมการ/ผู้ดูแล · ${staff.length} ชุมชน` : 'บัญชีเกษตรกร · เห็นเฉพาะคำขอของตน';
+    const committee = staff.length > 0 && !!user.email_confirmed_at;
+    setAdminSections(committee);
+    if (!adminView) $('roleHint').textContent = committee ? `บัญชีคณะกรรมการ/ผู้ดูแล · ${staff.length} ชุมชน` : 'บัญชีเกษตรกร · เห็นเฉพาะคำขอของตน';
     const options = '<option value="">เลือกชุมชน</option>' + communities.map((c) => `<option value="${c.id}">${esc(c.name)}${c.region ? ` · ${esc(c.region)}` : ''}</option>`).join('');
     $('communitySelect').innerHTML = options;
-    $('sourceCommunity').innerHTML = options;
+    $('sourceCommunity').innerHTML = '<option value="">เลือกชุมชน</option>' + communities.filter((c) => staff.some((s) => s.community_id === c.id)).map((c) => `<option value="${c.id}">${esc(c.name)}${c.region ? ` · ${esc(c.region)}` : ''}</option>`).join('');
     render();
   }
   function sourceCard(s) {
-    const edit = staff.some((x) => x.community_id === s.community_id) ? `<button class="button secondary" data-edit-source="${s.id}">แก้ไข/ปรับสถานะ</button>` : '';
+    const edit = adminView && staff.some((x) => x.community_id === s.community_id) ? `<button class="button secondary" data-edit-source="${s.id}">แก้ไข/ปรับสถานะ</button>` : '';
     const community = communities.find((c) => c.id === s.community_id)?.name || 'ชุมชน';
     return `<article class="source-item"><div><strong>${esc(s.name)}</strong><small>${esc(community)} · ${esc(sourceLabels[s.source_type])}</small><small>${esc(s.location_note || 'ไม่ได้ระบุจุดสังเกต')} · ${esc(s.note || '')}</small></div><div><span class="status ${s.status}">${esc(labels[s.status] || s.status)}</span><small>${s.source_type === 'irrigation_well' ? `พร้อมจัดสรร ${fmt(s.available_volume_m3)} ลบ.ม.` : 'แหล่งเติมน้ำ · ไม่นำไปจัดสรรสูบจ่าย'}</small>${edit}</div></article>`;
   }
@@ -68,7 +87,7 @@
     $('sourceList').innerHTML = sources.length ? `<div class="source-list">${sources.map(sourceCard).join('')}</div>` : '<div class="empty">ยังไม่มีข้อมูลแหล่งน้ำที่บันทึกโดยชุมชน</div>';
     $('requestRows').innerHTML = requests.length ? requests.map((r) => {
       const own = r.user_id === session.user.id;
-      const manager = staff.some((x) => x.community_id === r.community_id);
+      const manager = adminView && staff.some((x) => x.community_id === r.community_id);
       const planned = allocations.filter((a) => a.request_id === r.id);
       const allocationSummary = planned.length ? planned.map((a) => `<div class="allocation-item"><strong>${esc(sourceMap.get(a.source_id)?.name || 'แหล่งน้ำ')}</strong><small>${fmt(a.allocated_volume_m3)} ลบ.ม. · ${esc(new Date(a.scheduled_start).toLocaleString('th-TH', { dateStyle: 'medium', timeStyle: 'short' }))}–${esc(new Date(a.scheduled_end).toLocaleString('th-TH', { dateStyle: 'short', timeStyle: 'short' }))}</small>${manager ? `<button class="button secondary" data-delivery="${a.id}">บันทึกส่งจริง</button>` : ''}</div>`).join('') : '<small>ยังไม่มีแผนจัดสรร</small>';
       const actions = manager ? (r.status === 'pending' ? `<button class="button primary" data-review="${r.id}">ตรวจคำขอ</button>` : ['approved', 'scheduled', 'partially_delivered'].includes(r.status) ? `<button class="button secondary" data-schedule="${r.id}">เพิ่มแผนจัดสรร</button>` : '') : '';
@@ -103,3 +122,4 @@
   db.auth.onAuthStateChange((_event, nextSession) => { session = nextSession; window.setTimeout(() => loadAll().catch((e) => say(e.message, true)), 0); });
   loadAll().catch((e) => say(`${e.message} · ตรวจว่ารันไฟล์ supabase/water-bank.sql แล้ว`, true));
 })();
+
