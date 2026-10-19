@@ -7,6 +7,7 @@ const root = path.resolve(__dirname, '..');
 const html = fs.readFileSync(path.join(root, 'water-bank.html'), 'utf8');
 const js = fs.readFileSync(path.join(root, 'water-bank.js'), 'utf8');
 const sql = fs.readFileSync(path.join(root, 'supabase', 'water-bank.sql'), 'utf8');
+const mainHtml = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
 
 test('water bank script references existing unique HTML ids', () => {
   const ids = [...html.matchAll(/\bid="([^"]+)"/g)].map((m) => m[1]);
@@ -15,6 +16,13 @@ test('water bank script references existing unique HTML ids', () => {
   const referenced = [...js.matchAll(/\$\('([^']+)'\)/g)].map((m) => m[1]);
   assert.ok(referenced.length > 20, 'expected the application to bind its controls');
   assert.deepEqual([...new Set(referenced.filter((id) => !idSet.has(id)))], [], 'all JavaScript element lookups must exist in HTML');
+});
+
+test('existing RICE DOCTOR inline scripts still parse and link to the water bank', () => {
+  const inlineScripts = [...mainHtml.matchAll(/<script\b(?![^>]*\bsrc=)[^>]*>([\s\S]*?)<\/script>/gi)].map((m) => m[1]);
+  assert.ok(inlineScripts.length > 0);
+  for (const script of inlineScripts) assert.doesNotThrow(() => new Function(script));
+  assert.match(mainHtml, /href="\.\/water-bank\.html"/);
 });
 
 test('migration enables row-level security for every water data table', () => {
